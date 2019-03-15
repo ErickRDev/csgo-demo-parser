@@ -1,0 +1,8 @@
+node_modules/
+
+# ===========================
+# Application specific stuff
+# ===========================
+
+# parsed demos
+parsed
