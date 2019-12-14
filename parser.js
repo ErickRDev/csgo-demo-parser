@@ -230,8 +230,7 @@ fs.readFile(_DEMO_FILE_PATH, (err, buffer) => {
     if (!_MATCH_HAS_STARTED) return;
 
     // skipping non-players (casters, GOTV, BOTs, etc) and players who are currently dead
-    for (var playerInfo of _.filter(df.entities.players, (p) => p.health != 0)) {
-      console.log(playerInfo.weapons);
+    for (var playerInfo of _.filter(df.entities.players, (p) => p.health > 0)) {
       _TICK_STREAM.write(parsePlayerInfo(playerInfo) + "\n");
     }
   });
