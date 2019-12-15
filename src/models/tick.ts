@@ -13,7 +13,7 @@ export class Tick {
     z: number;
     place_name: string;
 
-    public static describeFields(delimiter: string = ';'): string {
+    public static describeFields(delimiter = ';'): string {
         return [
             'tick', 
             'round', 

@@ -8,16 +8,16 @@ export class PlayerDeath {
   headshot: boolean;
   penetrated: boolean;
 
-  public static describeFields(delimiter: string = ';') {
-    return [
-      'tick',
-      'round',
-      'user_id',
-      'attacker',
-      'assister',
-      'weapon',
-      'headshot',
-      'penetrated'
-    ].join(delimiter) + '\n';
+  public static describeFields(delimiter = ';'): string {
+      return [
+          'tick',
+          'round',
+          'user_id',
+          'attacker',
+          'assister',
+          'weapon',
+          'headshot',
+          'penetrated'
+      ].join(delimiter) + '\n';
   }
 }

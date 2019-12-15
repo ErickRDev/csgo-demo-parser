@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as _ from 'lodash';
 import { 
     DemoFile, 
-    Player 
+    Player
 } from 'demofile'; 
 
 /* Models */
@@ -15,17 +15,16 @@ import { WeaponFire } from './models/weapon_fire';
 export class Parser {
     public df: DemoFile;
     public verboseness: number;
-    public delimiter: string = ';';
-
-    public matchHasStarted: boolean = false;
+    public delimiter = ';';
+    public matchHasStarted = false;
 
     /* File streams */
-    public tickStream: any;
-    public playerDeathStream: any;
-    public utilityLifecycleStream: any;
-    public weaponFireStream: any;
+    public tickStream;
+    public playerDeathStream;
+    public utilityLifecycleStream;
+    public weaponFireStream;
 
-    constructor(basePath: string, verboseness: number = 0) {
+    constructor(basePath: string, verboseness = 0) {
         this.df = new DemoFile();
         this.verboseness = verboseness;
 
@@ -61,7 +60,7 @@ export class Parser {
 
         /** Fired when the game starts - pre warmup */
         this.df.on('start', () => {
-            var mapHeader = this.df.header;
+            const mapHeader = this.df.header;
             if (this.verboseness > 0) {
                 console.log('Parsing started!');
                 console.log(mapHeader);
@@ -78,7 +77,7 @@ export class Parser {
   
         /** Fired at the start of the round */
         this.df.gameEvents.on('round_start', () => {
-            var round = this.df.gameRules.roundsPlayed;
+            const round = this.df.gameRules.roundsPlayed;
             if (round > 0 && this.verboseness > 0) {
                 console.log(`Round ${round} started!`);
             }
@@ -104,18 +103,18 @@ export class Parser {
         });
 
         /** Fired at the end of every tick */
-        this.df.on('tickend', e => {
+        this.df.on('tickend', () => {
             if (!this.matchHasStarted) return;
 
             // skipping non-players (casters, GOTV, BOTs, etc) and players who are currently dead
-            for (var player of _.filter(this.df.entities.players, (p) => p.health > 0)) {
+            for (const player of _.filter(this.df.entities.players, (p) => p.health > 0)) {
                 this.tickStream.write(this._parsePlayerInfo(player));
             }
         });
 
         /** Fired when the round officially ends */
         if (this.verboseness > 0) {
-            this.df.gameEvents.on('round_officially_ended', (e) => {
+            this.df.gameEvents.on('round_officially_ended', () => {
                 console.log('\tRound ended!');
             });
         }
@@ -131,7 +130,7 @@ export class Parser {
         this.df.gameEvents.on('hegrenade_detonate', (e) => {
             if (!this.matchHasStarted) return;
 
-            e['event'] = 'hegrenade_detonate'
+            e['event'] = 'hegrenade_detonate';
             this.utilityLifecycleStream.write(this._parseUtilityLifecycleEvent(e));
         });
 
@@ -139,7 +138,7 @@ export class Parser {
         this.df.gameEvents.on('flashbang_detonate', (e) => {
             if (!this.matchHasStarted) return;
 
-            e['event'] = 'flashbang_detonate'
+            e['event'] = 'flashbang_detonate';
             this.utilityLifecycleStream.write(this._parseUtilityLifecycleEvent(e));
         });
 
@@ -147,7 +146,7 @@ export class Parser {
         this.df.gameEvents.on('smokegrenade_expired', (e) => {
             if (!this.matchHasStarted) return;
 
-            e['event'] = 'smokegrenade_expired'
+            e['event'] = 'smokegrenade_expired';
             this.utilityLifecycleStream.write(this._parseUtilityLifecycleEvent(e));
         });
 
@@ -155,7 +154,7 @@ export class Parser {
         this.df.gameEvents.on('smokegrenade_detonate', (e) => {
             if (!this.matchHasStarted) return;
 
-            e['event'] = 'smokegrenade_detonate'
+            e['event'] = 'smokegrenade_detonate';
             this.utilityLifecycleStream.write(this._parseUtilityLifecycleEvent(e));
         });
 
@@ -163,7 +162,7 @@ export class Parser {
         this.df.gameEvents.on('molotov_detonate', (e) => {
             if (!this.matchHasStarted) return;
 
-            e['event'] = 'molotov_detonate'
+            e['event'] = 'molotov_detonate';
             this.utilityLifecycleStream.write(this._parseUtilityLifecycleEvent(e));
         });
 
@@ -173,12 +172,12 @@ export class Parser {
 
             this.playerDeathStream.write(this._parsePlayerDeathEvent(e));
 
-            var victim = this.df.entities.getByUserId(e.attacker);
+            const victim = this.df.entities.getByUserId(e.attacker);
             // saving last known stats of the killed player
             this.tickStream.write(this._parsePlayerInfo(victim));
 
             if (this.verboseness > 0) {
-                var killerInfo = this.df.entities.getByUserId(e.userid);
+                const killerInfo = this.df.entities.getByUserId(e.userid);
                 console.log(`${killerInfo.name} killed ${victim.name} with ${e.weapon}`);
             }
         });
@@ -210,7 +209,7 @@ export class Parser {
      * Parses a weapon fire event.
      * @param event The weapon fire event entity.
      */
-    private _parseWeaponFireEvent(event: any): string {
+    private _parseWeaponFireEvent(event): string {
         return [
             this.df.currentTick,
             this.df.gameRules.roundsPlayed,
@@ -222,7 +221,7 @@ export class Parser {
      * Parses a player death event.
      * @param event The player death event entity.
      */
-    private _parsePlayerDeathEvent(event: any): string {
+    private _parsePlayerDeathEvent(event): string {
         return [
             this.df.currentTick,
             this.df.gameRules.roundsPlayed,
@@ -239,7 +238,7 @@ export class Parser {
      * Parses a utility lifecycle event.
      * @param event The utility lifecycle event entity.
      */
-    private _parseUtilityLifecycleEvent(event: any): string {
+    private _parseUtilityLifecycleEvent(event): string {
         return [
             this.df.currentTick,
             this.df.gameRules.roundsPlayed,

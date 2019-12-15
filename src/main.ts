@@ -3,25 +3,25 @@ import * as path from 'path';
 import * as yargs from 'yargs';
 import { Parser } from './parser';
 
-(() => {
+((): void => {
 
-  const argv = yargs.option({
-    demo: { type: 'string', demandOption: true },
-    verboseness: { type: 'number', default: 0 }
-  }).argv;
+    const argv = yargs.option({
+        demo: { type: 'string', demandOption: true },
+        verboseness: { type: 'number', default: 0 }
+    }).argv;
 
-  console.log(argv.demo);
+    console.log(argv.demo);
 
-  fs.readFile(argv.demo, (err, buffer) => {
-    if (err) {
-      console.log(`Couldn't read demo file: ${argv.demo}`);
-      console.log(`Error: ${err}`);
-    }
+    fs.readFile(argv.demo, (err, buffer) => {
+        if (err) {
+            console.log(`Couldn't read demo file: ${argv.demo}`);
+            console.log(`Error: ${err}`);
+        }
 
-    // Dynamically defining the staging area
-    const staging_area = path.dirname(argv.demo);
+        // Dynamically defining the staging area
+        const stagingArea = path.dirname(argv.demo);
 
-    const parser = new Parser(staging_area, argv.verboseness);
-    parser.parse(buffer);
-  });
+        const parser = new Parser(stagingArea, argv.verboseness);
+        parser.parse(buffer);
+    });
 })();

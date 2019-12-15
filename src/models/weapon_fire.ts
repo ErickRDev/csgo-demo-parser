@@ -3,11 +3,11 @@ export class WeaponFire {
   round: number;
   weapon: number;
 
-  public static describeFields(delimiter: string = ';'): string {
-    return [
-      'tick',
-      'round',
-      'weapon'
-    ].join(delimiter) + '\n';
+  public static describeFields(delimiter = ';'): string {
+      return [
+          'tick',
+          'round',
+          'weapon'
+      ].join(delimiter) + '\n';
   }
 }
