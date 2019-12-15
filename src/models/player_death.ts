@@ -1,9 +1,10 @@
 export class PlayerDeath {
   tick: number;
   round: number;
-  user_id: string;
+  userId: string;
   attacker: number;
   assister: number;
+  assistedFlash: number;
   weapon: number;
   headshot: boolean;
   penetrated: boolean;
@@ -12,9 +13,10 @@ export class PlayerDeath {
       return [
           'tick',
           'round',
-          'user_id',
+          'userId',
           'attacker',
           'assister',
+          'assistedFlash',
           'weapon',
           'headshot',
           'penetrated'

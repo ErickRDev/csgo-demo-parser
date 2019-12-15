@@ -1,9 +1,9 @@
 export class Tick {
     tick: number;
     round: number;
-    user_id: string;
-    steam_id: string;
-    user_name: string;
+    userId: string;
+    steamId: string;
+    userName: string;
     health: number;
     pitch: number;
     yaw: number;
@@ -11,15 +11,15 @@ export class Tick {
     x: number;
     y: number;
     z: number;
-    place_name: string;
+    placeName: string;
 
     public static describeFields(delimiter = ';'): string {
         return [
             'tick', 
             'round', 
-            'user_id',
-            'steam_id',
-            'user_name',
+            'userId',
+            'steamId',
+            'userName',
             'health',
             'pitch',
             'yaw',
@@ -27,7 +27,7 @@ export class Tick {
             'x',
             'y',
             'z',
-            'place_name'
+            'placeName'
         ].join(delimiter) + '\n';
     }
 }

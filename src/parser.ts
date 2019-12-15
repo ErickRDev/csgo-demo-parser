@@ -11,11 +11,14 @@ import { PlayerDeath } from './models/player_death';
 import { Tick } from './models/tick';
 import { UtilityLifecycle } from './models/utility_lifecycle';
 import { WeaponFire } from './models/weapon_fire';
+import { BombLifecycle } from './models/bomb_lifecycle';
 
 export class Parser {
-    public df: DemoFile;
     public verboseness: number;
+    public df: DemoFile;
     public delimiter = ';';
+    public stagingArea: string;
+
     public matchHasStarted = false;
 
     /* File streams */
@@ -23,32 +26,38 @@ export class Parser {
     public playerDeathStream;
     public utilityLifecycleStream;
     public weaponFireStream;
+    public bombLifecycleStream;
 
-    constructor(basePath: string, verboseness = 0) {
-        this.df = new DemoFile();
+    constructor(stagingArea: string, verboseness = 0) {
         this.verboseness = verboseness;
+        this.df = new DemoFile();
+        this.stagingArea = stagingArea;
 
         /* Ensuring staging directory exists */
-        if (!fs.existsSync(basePath)) {
-            fs.mkdirSync(basePath, { recursive: true });
+        if (!fs.existsSync(stagingArea)) {
+            fs.mkdirSync(stagingArea, { recursive: true });
         }
 
         /* Initializing streams & writing headers */
         // Tick table
-        this.tickStream = fs.createWriteStream(path.join(basePath, 'tick.csv'));
+        this.tickStream = fs.createWriteStream(path.join(stagingArea, 'tick.csv'));
         this.tickStream.write(Tick.describeFields(this.delimiter));
 
         // PlayerDeath table
-        this.playerDeathStream = fs.createWriteStream(path.join(basePath, 'player_death.csv'));
+        this.playerDeathStream = fs.createWriteStream(path.join(stagingArea, 'player_death.csv'));
         this.playerDeathStream.write(PlayerDeath.describeFields(this.delimiter));
 
         // UtilityLifecycle table
-        this.utilityLifecycleStream = fs.createWriteStream(path.join(basePath, 'utility_lifecycle.csv'));
+        this.utilityLifecycleStream = fs.createWriteStream(path.join(stagingArea, 'utility_lifecycle.csv'));
         this.utilityLifecycleStream.write(UtilityLifecycle.describeFields(this.delimiter));
 
         // WeaponFire table
-        this.weaponFireStream = fs.createWriteStream(path.join(basePath, 'weapon_fire.csv'));
+        this.weaponFireStream = fs.createWriteStream(path.join(stagingArea, 'weapon_fire.csv'));
         this.weaponFireStream.write(WeaponFire.describeFields(this.delimiter));
+
+        // BombLifecycle table
+        this.bombLifecycleStream = fs.createWriteStream(path.join(stagingArea, 'bomb_lifecycle.csv'));
+        this.bombLifecycleStream.write(BombLifecycle.describeFields(this.delimiter));
     }
 
     public parse(buffer: Buffer): void {
@@ -57,6 +66,15 @@ export class Parser {
     }
 
     public registerEvents(): void {
+
+        /** (?) Fired when the game events list is produced */
+        this.df.on('svc_GameEventList', () => {
+            const ws = fs.createWriteStream(path.join(this.stagingArea, 'events_dump.csv'));
+            this.df.gameEvents.gameEventList.forEach((event) => {
+                ws.write(event.name + '\n');
+            });
+            ws.close();
+        });
 
         /** Fired when the game starts - pre warmup */
         this.df.on('start', () => {
@@ -84,7 +102,7 @@ export class Parser {
         });
 
         /** Fired at the end of the match */
-        this.df.on('end', e => {
+        this.df.on('end', (e) => {
             if (e.error) {
                 console.log(e.error);
                 return;
@@ -166,21 +184,91 @@ export class Parser {
             this.utilityLifecycleStream.write(this._parseUtilityLifecycleEvent(e));
         });
 
+        /** Fired when an inferno starts burning */
+        this.df.gameEvents.on('inferno_startburn', (e) => {
+            if (!this.matchHasStarted) return;
+
+            e['event'] = 'inferno_startburn';
+            this.utilityLifecycleStream.write(this._parseUtilityLifecycleEvent(e));
+        });
+
+        /** Fired when an inferno expires */
+        this.df.gameEvents.on('inferno_expire', (e) => {
+            if (!this.matchHasStarted) return;
+
+            e['event'] = 'inferno_expire';
+            this.utilityLifecycleStream.write(this._parseUtilityLifecycleEvent(e));
+        });
+
+        /** Fired when an inferno extinguishes */
+        this.df.gameEvents.on('inferno_extinguish', (e) => {
+            if (!this.matchHasStarted) return;
+
+            e['event'] = 'inferno_extinguish';
+            this.utilityLifecycleStream.write(this._parseUtilityLifecycleEvent(e));
+        });
+
+        /** Fired when the bomb is planted */
+        this.df.gameEvents.on('bomb_planted', (e) => {
+            if (!this.matchHasStarted) return;
+
+            e['event'] = 'bomb_planted';
+            this.bombLifecycleStream.write(this._parseBombLifecycleEvent(e));
+        });
+
+        /** Fired when the bomb is defused */
+        this.df.gameEvents.on('bomb_defused', (e) => {
+            if (!this.matchHasStarted) return;
+
+            e['event'] = 'bomb_defused';
+            this.bombLifecycleStream.write(this._parseBombLifecycleEvent(e));
+        });
+
+        /** Fired when the bomb explodes */
+        this.df.gameEvents.on('bomb_exploded', (e) => {
+            if (!this.matchHasStarted) return;
+
+            e['event'] = 'bomb_exploded';
+            this.bombLifecycleStream.write(this._parseBombLifecycleEvent(e));
+        });
+
+        /** Fired when the bomb is dropped */
+        this.df.gameEvents.on('bomb_dropped', (e) => { 
+            if (!this.matchHasStarted) return;
+
+            e['event'] = 'bomb_dropped';
+            this.bombLifecycleStream.write(this._parseBombLifecycleEvent(e));
+        });
+
+        /** Fired when the bomb is picked up */
+        this.df.gameEvents.on('bomb_pickup', (e) => {
+            if (!this.matchHasStarted) return;
+
+            e['event'] = 'bomb_pickup';
+            this.bombLifecycleStream.write(this._parseBombLifecycleEvent(e));
+        });
+
         /** Fired when a player dies */
         this.df.gameEvents.on('player_death', (e) => {
             if (!this.matchHasStarted) return;
 
             this.playerDeathStream.write(this._parsePlayerDeathEvent(e));
 
-            const victim = this.df.entities.getByUserId(e.attacker);
+            const victim = this.df.entities.getByUserId(e.userid);
             // saving last known stats of the killed player
             this.tickStream.write(this._parsePlayerInfo(victim));
 
             if (this.verboseness > 0) {
-                const killerInfo = this.df.entities.getByUserId(e.userid);
+                const killerInfo = this.df.entities.getByUserId(e.attacker);
                 console.log(`${killerInfo.name} killed ${victim.name} with ${e.weapon}`);
             }
         });
+
+        /** Other events that actually trigger */
+        // this.df.gameEvents.on('player_hurt', () => console.log('player_hurt triggered'));
+        // this.df.gameEvents.on('player_blind', () => console.log('player_blind triggered'));
+        // this.df.gameEvents.on('round_start', () => console.log('round_start triggered'));
+        // this.df.gameEvents.on('round_end', () => console.log('round_end triggered'));
     }
 
     /**
@@ -228,6 +316,7 @@ export class Parser {
             event.userid,
             event.attacker,
             event.assister,
+            event.assistedflash,
             event.weapon,
             event.headshot,
             event.penetrated
@@ -243,10 +332,24 @@ export class Parser {
             this.df.currentTick,
             this.df.gameRules.roundsPlayed,
             event.event,
-            event.eventId,
+            event.userid,
+            event.entityid,
             event.x,
             event.y,
             event.z
+        ].join(this.delimiter) + '\n';
+    }
+
+    /**
+     * Parses a bomb lifecycle event.
+     * @param event The bomb lifecycle event entity.
+     */
+    private _parseBombLifecycleEvent(event): string {
+        return [
+            this.df.currentTick,
+            this.df.gameRules.roundsPlayed,
+            event.event,
+            event.userid
         ].join(this.delimiter) + '\n';
     }
 }

@@ -1,8 +1,9 @@
 export class UtilityLifecycle {
   tick: number;
   round: number;
-  event: number;
-  entity_id: string;
+  event: string;
+  userId: string;
+  entityId: string;
   x: number;
   y: number;
   z: number;
@@ -12,7 +13,8 @@ export class UtilityLifecycle {
           'tick',
           'round',
           'event',
-          'entity_id',
+          'userId',
+          'entityId',
           'x',
           'y',
           'z'

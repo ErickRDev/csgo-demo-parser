@@ -16,6 +16,7 @@
   },
   "devDependencies": {
     "@types/bytebuffer": "^5.0.40",
+    "@types/lodash": "^4.14.149",
     "@types/node": "^12.12.17",
     "@types/yargs": "^13.0.3",
     "@typescript-eslint/eslint-plugin": "^2.11.0",
