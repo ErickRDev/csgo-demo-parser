@@ -9,8 +9,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "demofile": "^1.0.4",
+    "demofile": "^1.1.1",
     "fs": "0.0.1-security",
-    "lodash": "^4.17.11"
+    "lodash": "^4.17.15",
+    "yargs": "^15.0.2"
+  },
+  "devDependencies": {
+    "@types/bytebuffer": "^5.0.40",
+    "@types/node": "^12.12.17",
+    "@types/yargs": "^13.0.3"
   }
 }
