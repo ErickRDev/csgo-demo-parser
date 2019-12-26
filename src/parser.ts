@@ -3,7 +3,8 @@ import * as fs from 'fs';
 import * as _ from 'lodash';
 import { 
     DemoFile, 
-    Player
+    Player,
+    Weapon
 } from 'demofile'; 
 
 /* Models */
@@ -13,13 +14,23 @@ import { UtilityLifecycle } from './models/utility_lifecycle';
 import { WeaponFire } from './models/weapon_fire';
 import { BombLifecycle } from './models/bomb_lifecycle';
 
+/**
+ * The parser class.
+ * Responsible for parsing demo files.
+ */
 export class Parser {
-    public verboseness: number;
     public df: DemoFile;
     public delimiter = ';';
     public stagingArea: string;
+    public verboseness: number;
 
+    /* Auxiliary structures */
     public matchHasStarted = false;
+    public utilitiesIndex: Map<string, string>;
+
+    /* Simple accessors for data in DemoFile */
+    public currentRound = (): number => this.df.gameRules.roundsPlayed;
+    public currentTick = (): number => this.df.currentTick;
 
     /* File streams */
     public tickStream;
@@ -28,6 +39,16 @@ export class Parser {
     public weaponFireStream;
     public bombLifecycleStream;
 
+    /* Debug message templates */
+    UTILITY_LIFECYCLE_TEXT = (event: UtilityLifecycle): string => {
+        return `User=${event.userId}; Event=${event.event};`;
+    };
+
+    /**
+     *
+     * @param stagingArea - The directory used as a staging area {storing parsed data, etc}
+     * @param verboseness - The verboseness configured level
+     */
     constructor(stagingArea: string, verboseness = 0) {
         this.verboseness = verboseness;
         this.df = new DemoFile();
@@ -37,6 +58,15 @@ export class Parser {
         if (!fs.existsSync(stagingArea)) {
             fs.mkdirSync(stagingArea, { recursive: true });
         }
+
+        /* Constructing utilities index */
+        this.utilitiesIndex = new Map<string, string>();
+        this.utilitiesIndex.set('weapon_decoy', 'decoy');
+        this.utilitiesIndex.set('weapon_flashbang', 'flashbang');
+        this.utilitiesIndex.set('weapon_hegrenade', 'hegrenade');
+        this.utilitiesIndex.set('weapon_incgrenade', 'inferno');
+        this.utilitiesIndex.set('weapon_molotov', 'molotov');
+        this.utilitiesIndex.set('weapon_smokegrenade', 'smokegrenade');
 
         /* Initializing streams & writing headers */
         // Tick table
@@ -141,71 +171,116 @@ export class Parser {
         this.df.gameEvents.on('weapon_fire', (e) => {
             if (!this.matchHasStarted) return;
 
+            const weapon: Weapon = this.df.entities.getByUserId(e.userid).weapon;
+
+            if (weapon && this.utilitiesIndex.has(weapon.className)) {
+                // A utility was thrown,
+                //  generating utility lifecycle event:
+                const utilityThrownEvent: UtilityLifecycle = this._genUtilityThrownEvent(
+                    weapon,
+                    e.userid,
+                    [
+                        weapon.owner.position.x,
+                        weapon.owner.position.y,
+                        weapon.owner.position.z
+                    ]
+                );
+                this.utilityLifecycleStream.write(this._parseUtilityLifecycleEvent(utilityThrownEvent));
+                console.log(this.UTILITY_LIFECYCLE_TEXT(utilityThrownEvent));
+            }
+
             this.weaponFireStream.write(this._parseWeaponFireEvent(e));
         });
+
+        // TODO: Place this method elsewhere!
+        /**
+         * Handles an event lifecycle event by generating an encapsulating relevant info
+         * in an object, writing to stream and logging to screen (if set to)
+         * @param eventName - The event name
+         * @param eventInfo - Information regarding the event
+         */
+        const handleUtilityLifecycleEvent = (eventName: string, eventInfo): void => {
+            const utilityLifecycleEvent: UtilityLifecycle = {
+                tick: this.currentTick(),
+                round: this.currentRound(),
+                event: eventName,
+                userId: eventInfo.userid,
+                x: eventInfo.x,
+                y: eventInfo.y,
+                z: eventInfo.z
+            };
+
+            this.utilityLifecycleStream.write(this._parseUtilityLifecycleEvent(utilityLifecycleEvent));
+            console.log(this.UTILITY_LIFECYCLE_TEXT(utilityLifecycleEvent));
+        };
 
         /** Fired when an HE is detonated */
         this.df.gameEvents.on('hegrenade_detonate', (e) => {
             if (!this.matchHasStarted) return;
-
-            e['event'] = 'hegrenade_detonate';
-            this.utilityLifecycleStream.write(this._parseUtilityLifecycleEvent(e));
+            handleUtilityLifecycleEvent('hegrenade_detonate', e);
         });
 
         /** Fired when a flashbang is detonated */
         this.df.gameEvents.on('flashbang_detonate', (e) => {
             if (!this.matchHasStarted) return;
-
-            e['event'] = 'flashbang_detonate';
-            this.utilityLifecycleStream.write(this._parseUtilityLifecycleEvent(e));
+            handleUtilityLifecycleEvent('flashbang_detonate', e);
         });
 
         /** Fired when a smoke grenade expires */
         this.df.gameEvents.on('smokegrenade_expired', (e) => {
             if (!this.matchHasStarted) return;
-
-            e['event'] = 'smokegrenade_expired';
-            this.utilityLifecycleStream.write(this._parseUtilityLifecycleEvent(e));
+            handleUtilityLifecycleEvent('smokegrenade_expired', e);
         });
 
         /** Fired when a smoke grenade detonates */
         this.df.gameEvents.on('smokegrenade_detonate', (e) => {
             if (!this.matchHasStarted) return;
-
-            e['event'] = 'smokegrenade_detonate';
-            this.utilityLifecycleStream.write(this._parseUtilityLifecycleEvent(e));
+            handleUtilityLifecycleEvent('smokegrenade_detonate', e);
         });
 
         /** Fired when a molotov detonates */
         this.df.gameEvents.on('molotov_detonate', (e) => {
             if (!this.matchHasStarted) return;
-
-            e['event'] = 'molotov_detonate';
-            this.utilityLifecycleStream.write(this._parseUtilityLifecycleEvent(e));
+            handleUtilityLifecycleEvent('molotov_detonate', e);
         });
 
         /** Fired when an inferno starts burning */
         this.df.gameEvents.on('inferno_startburn', (e) => {
             if (!this.matchHasStarted) return;
-
-            e['event'] = 'inferno_startburn';
-            this.utilityLifecycleStream.write(this._parseUtilityLifecycleEvent(e));
+            handleUtilityLifecycleEvent('inferno_startburn', e);
         });
 
         /** Fired when an inferno expires */
         this.df.gameEvents.on('inferno_expire', (e) => {
             if (!this.matchHasStarted) return;
-
-            e['event'] = 'inferno_expire';
-            this.utilityLifecycleStream.write(this._parseUtilityLifecycleEvent(e));
+            handleUtilityLifecycleEvent('inferno_expire', e);
         });
 
         /** Fired when an inferno extinguishes */
         this.df.gameEvents.on('inferno_extinguish', (e) => {
             if (!this.matchHasStarted) return;
+            handleUtilityLifecycleEvent('inferno_extinguish', e);
+        });
 
-            e['event'] = 'inferno_extinguish';
-            this.utilityLifecycleStream.write(this._parseUtilityLifecycleEvent(e));
+        /** Fired when a decoy starts firing */
+        this.df.gameEvents.on('decoy_started', (e) => {
+            if (!this.matchHasStarted) return;
+            console.log(e);
+            handleUtilityLifecycleEvent('decoy_started', e);
+        });
+
+        /** Fired when a decoy is firing */
+        this.df.gameEvents.on('decoy_firing', (e) => {
+            if (!this.matchHasStarted) return;
+            console.log(e);
+            handleUtilityLifecycleEvent('decoy_firing', e);
+        });
+
+        /** Fired when a decoy detonates */
+        this.df.gameEvents.on('decoy_detonate', (e) => {
+            if (!this.matchHasStarted) return;
+            console.log(e);
+            handleUtilityLifecycleEvent('decoy_detonate', e);
         });
 
         /** Fired when the bomb is planted */
@@ -272,8 +347,39 @@ export class Parser {
     }
 
     /**
+     * Generates an event encapsulating information regarding the thrown grenade
+     * @param weapon - The weapon used
+     * @param userId - The unique handle (in this match) for the user responsible for triggering the event
+     */
+    private _genUtilityThrownEvent(
+        weapon: Weapon,
+        userId: number,
+        position: [number, number, number]
+    ): UtilityLifecycle {
+        // Checking the grenades index
+        if (!this.utilitiesIndex.has(weapon.className)) {
+            return undefined;
+        }
+
+        const utility: string = this.utilitiesIndex.get(weapon.className);
+
+        // Generating utility lifecycle event for 'grenade thrown' scenarios
+        const utilityLifecycleEvent: UtilityLifecycle = {
+            tick: this.currentTick(),
+            round: this.currentRound(),
+            event: `${utility}_thrown`,
+            userId: userId?.toString() || '',
+            x: position[0],
+            y: position[1],
+            z: position[2]
+        };
+
+        return utilityLifecycleEvent;
+    }
+
+    /**
      * Parses a player entity for its state in the game on the current tick.
-     * @param player The player entity.
+     * @param player - The player entity.
      */
     private _parsePlayerInfo(player: Player): string {
         return [
@@ -295,19 +401,20 @@ export class Parser {
 
     /**
      * Parses a weapon fire event.
-     * @param event The weapon fire event entity.
+     * @param event - The weapon fire event entity.
      */
     private _parseWeaponFireEvent(event): string {
         return [
             this.df.currentTick,
             this.df.gameRules.roundsPlayed,
+            event.userid,
             event.weapon
         ].join(this.delimiter) + '\n';
     }
 
     /**
      * Parses a player death event.
-     * @param event The player death event entity.
+     * @param event - The player death event entity.
      */
     private _parsePlayerDeathEvent(event): string {
         return [
@@ -325,15 +432,14 @@ export class Parser {
 
     /**
      * Parses a utility lifecycle event.
-     * @param event The utility lifecycle event entity.
+     * @param event - The utility lifecycle event entity.
      */
-    private _parseUtilityLifecycleEvent(event): string {
+    private _parseUtilityLifecycleEvent(event: UtilityLifecycle): string {
         return [
-            this.df.currentTick,
-            this.df.gameRules.roundsPlayed,
+            this.currentTick(),
+            this.currentRound(),
             event.event,
-            event.userid,
-            event.entityid,
+            event.userId,
             event.x,
             event.y,
             event.z
@@ -342,7 +448,7 @@ export class Parser {
 
     /**
      * Parses a bomb lifecycle event.
-     * @param event The bomb lifecycle event entity.
+     * @param event - The bomb lifecycle event entity.
      */
     private _parseBombLifecycleEvent(event): string {
         return [

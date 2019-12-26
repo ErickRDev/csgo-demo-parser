@@ -3,7 +3,6 @@ export class UtilityLifecycle {
   round: number;
   event: string;
   userId: string;
-  entityId: string;
   x: number;
   y: number;
   z: number;
@@ -14,7 +13,6 @@ export class UtilityLifecycle {
           'round',
           'event',
           'userId',
-          'entityId',
           'x',
           'y',
           'z'
