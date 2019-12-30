@@ -96,7 +96,6 @@ export class Parser {
     }
 
     public registerEvents(): void {
-
         /** (?) Fired when the game events list is produced */
         this.df.on('svc_GameEventList', () => {
             const ws = fs.createWriteStream(path.join(this.stagingArea, 'events_dump.csv'));
@@ -115,7 +114,7 @@ export class Parser {
             }
         });
 
-        /** Fired when the match actually starts - after warmup */
+        /** Fired when the match actually starts - post warmup */
         this.df.gameEvents.on('round_announce_match_start', () => {
             this.matchHasStarted = true;
             if (this.verboseness > 0) {
@@ -186,7 +185,10 @@ export class Parser {
                     ]
                 );
                 this.utilityLifecycleStream.write(this._parseUtilityLifecycleEvent(utilityThrownEvent));
-                console.log(this.UTILITY_LIFECYCLE_TEXT(utilityThrownEvent));
+
+                if (this.verboseness > 0) {
+                    console.log(this.UTILITY_LIFECYCLE_TEXT(utilityThrownEvent));
+                }
             }
 
             this.weaponFireStream.write(this._parseWeaponFireEvent(e));
@@ -209,9 +211,11 @@ export class Parser {
                 y: eventInfo.y,
                 z: eventInfo.z
             };
-
             this.utilityLifecycleStream.write(this._parseUtilityLifecycleEvent(utilityLifecycleEvent));
-            console.log(this.UTILITY_LIFECYCLE_TEXT(utilityLifecycleEvent));
+
+            if (this.verboseness > 0) {
+                console.log(this.UTILITY_LIFECYCLE_TEXT(utilityLifecycleEvent));
+            }
         };
 
         /** Fired when an HE is detonated */
@@ -265,21 +269,18 @@ export class Parser {
         /** Fired when a decoy starts firing */
         this.df.gameEvents.on('decoy_started', (e) => {
             if (!this.matchHasStarted) return;
-            console.log(e);
             handleUtilityLifecycleEvent('decoy_started', e);
         });
 
         /** Fired when a decoy is firing */
         this.df.gameEvents.on('decoy_firing', (e) => {
             if (!this.matchHasStarted) return;
-            console.log(e);
             handleUtilityLifecycleEvent('decoy_firing', e);
         });
 
         /** Fired when a decoy detonates */
         this.df.gameEvents.on('decoy_detonate', (e) => {
             if (!this.matchHasStarted) return;
-            console.log(e);
             handleUtilityLifecycleEvent('decoy_detonate', e);
         });
 
@@ -339,11 +340,15 @@ export class Parser {
             }
         });
 
-        /** Other events that actually trigger */
-        // this.df.gameEvents.on('player_hurt', () => console.log('player_hurt triggered'));
-        // this.df.gameEvents.on('player_blind', () => console.log('player_blind triggered'));
-        // this.df.gameEvents.on('round_start', () => console.log('round_start triggered'));
-        // this.df.gameEvents.on('round_end', () => console.log('round_end triggered'));
+        /** When a player gets hurt */
+        this.df.gameEvents.on('player_hurt', (e) => {
+            console.log(e);
+        });
+
+        /** When a plyer is blinded */
+        this.df.gameEvents.on('player_blind', (e) => {
+            console.log(e);
+        });
     }
 
     /**
