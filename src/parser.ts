@@ -242,11 +242,11 @@ export class Parser {
             handleUtilityLifecycleEvent('smokegrenade_detonate', e);
         });
 
-        /** Fired when a molotov detonates */
-        this.df.gameEvents.on('molotov_detonate', (e) => {
-            if (!this.matchHasStarted) return;
-            handleUtilityLifecycleEvent('molotov_detonate', e);
-        });
+        // /** Fired when a molotov detonates */
+        // this.df.gameEvents.on('molotov_detonate', (e) => {
+        //     if (!this.matchHasStarted) return;
+        //     handleUtilityLifecycleEvent('molotov_detonate', e);
+        // });
 
         /** Fired when an inferno starts burning */
         this.df.gameEvents.on('inferno_startburn', (e) => {
@@ -260,11 +260,11 @@ export class Parser {
             handleUtilityLifecycleEvent('inferno_expire', e);
         });
 
-        /** Fired when an inferno extinguishes */
-        this.df.gameEvents.on('inferno_extinguish', (e) => {
-            if (!this.matchHasStarted) return;
-            handleUtilityLifecycleEvent('inferno_extinguish', e);
-        });
+        // /** Fired when an inferno extinguishes */
+        // this.df.gameEvents.on('inferno_extinguish', (e) => {
+        //     if (!this.matchHasStarted) return;
+        //     handleUtilityLifecycleEvent('inferno_extinguish', e);
+        // });
 
         /** Fired when a decoy starts firing */
         this.df.gameEvents.on('decoy_started', (e) => {
@@ -272,11 +272,11 @@ export class Parser {
             handleUtilityLifecycleEvent('decoy_started', e);
         });
 
-        /** Fired when a decoy is firing */
-        this.df.gameEvents.on('decoy_firing', (e) => {
-            if (!this.matchHasStarted) return;
-            handleUtilityLifecycleEvent('decoy_firing', e);
-        });
+        // /** Fired when a decoy is firing */
+        // this.df.gameEvents.on('decoy_firing', (e) => {
+        //     if (!this.matchHasStarted) return;
+        //     handleUtilityLifecycleEvent('decoy_firing', e);
+        // });
 
         /** Fired when a decoy detonates */
         this.df.gameEvents.on('decoy_detonate', (e) => {

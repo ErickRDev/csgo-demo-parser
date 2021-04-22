@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as yargs from 'yargs';
+import { parse } from 'yargs';
 import { Parser } from './parser';
 
 ((): void => {
@@ -18,8 +19,9 @@ import { Parser } from './parser';
             console.log(`Error: ${err}`);
         }
 
+        const parsedPath = path.parse(argv.demo);
         // Dynamically defining the staging area
-        const stagingArea = path.dirname(argv.demo);
+        const stagingArea = path.join(parsedPath.dir, parsedPath.name);
 
         const parser = new Parser(stagingArea, argv.verboseness);
         parser.parse(buffer);
