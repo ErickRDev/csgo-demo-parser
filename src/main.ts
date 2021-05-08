@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as yargs from 'yargs';
-import { parse } from 'yargs';
 import { Parser } from './parser';
 
 ((): void => {
@@ -10,8 +9,6 @@ import { Parser } from './parser';
         demo: { type: 'string', demandOption: true },
         verboseness: { type: 'number', default: 0 }
     }).argv;
-
-    console.log(argv.demo);
 
     fs.readFile(argv.demo, (err, buffer) => {
         if (err) {

@@ -342,12 +342,16 @@ export class Parser {
 
         /** When a player gets hurt */
         this.df.gameEvents.on('player_hurt', (e) => {
-            console.log(e);
+            if (this.verboseness > 0) {
+                console.log(e);
+            }
         });
 
         /** When a plyer is blinded */
         this.df.gameEvents.on('player_blind', (e) => {
-            console.log(e);
+            if (this.verboseness > 0) {
+                console.log(e);
+            }
         });
     }
 
