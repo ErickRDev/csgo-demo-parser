@@ -21,6 +21,9 @@ import { Parser } from './parser';
         const stagingArea = path.join(parsedPath.dir, parsedPath.name);
 
         const parser = new Parser(stagingArea, argv.verboseness);
-        parser.parse(buffer);
+
+        parser.Ready
+            .then(() => parser.parse(buffer))
+            .catch((err) => console.log(err));
     });
 })();

@@ -12,6 +12,7 @@
     "demofile": "^1.9.0",
     "fs": "0.0.1-security",
     "lodash": "^4.17.15",
+    "parquets": "^0.10.10",
     "yargs": "^15.0.2"
   },
   "devDependencies": {
