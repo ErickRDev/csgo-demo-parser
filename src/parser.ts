@@ -1,7 +1,7 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import * as _ from 'lodash';
-import { ParquetWriter } from 'parquets';
+import { ParquetWriter, ParquetWriterOptions } from 'parquets';
 import { DemoFile, Player, Weapon } from 'demofile'; 
 
 /* Models */
@@ -83,8 +83,13 @@ export class Parser {
     private initializeParquetStreams(stagingArea: string): Promise<void[]> {
         let promises = [];
 
+        // Aiming for 1GB row groups
+        let opts: ParquetWriterOptions = {
+            rowGroupSize: 1073741824,
+        };
+
         promises.push(
-            ParquetWriter.openFile(TickSchema, path.join(stagingArea, 'tick.parquet'))
+            ParquetWriter.openFile(TickSchema, path.join(stagingArea, 'tick.parquet'), opts)
             .then((writer) => this.tickWriter = writer)
             .catch((err) => console.log(err))
         );
@@ -215,7 +220,7 @@ export class Parser {
                 );
                 this.utilityLifecycleWriter.appendRow(utilityThrownEvent);
 
-                if (this.verboseness > 0) {
+                if (this.verboseness > 1) {
                     console.log(this.UTILITY_LIFECYCLE_TEXT(utilityThrownEvent));
                 }
             }
@@ -250,7 +255,7 @@ export class Parser {
 
             this.utilityLifecycleWriter.appendRow(utilityLifecycleEvent);
 
-            if (this.verboseness > 0) {
+            if (this.verboseness > 1) {
                 console.log(this.UTILITY_LIFECYCLE_TEXT(utilityLifecycleEvent));
             }
         };
@@ -428,7 +433,7 @@ export class Parser {
                 Tick.FromPlayer(this.df.currentTick, this.df.gameRules.roundsPlayed, victim)
             );
 
-            if (this.verboseness > 0) {
+            if (this.verboseness > 1) {
                 const killerInfo = this.df.entities.getByUserId(e.attacker);
                 console.log(`${killerInfo.name} killed ${victim.name} with ${e.weapon}`);
             }
@@ -436,14 +441,14 @@ export class Parser {
 
         /** When a player gets hurt */
         this.df.gameEvents.on('player_hurt', (e) => {
-            if (this.verboseness > 0) {
+            if (this.verboseness > 1) {
                 console.log(e);
             }
         });
 
         /** When a plyer is blinded */
         this.df.gameEvents.on('player_blind', (e) => {
-            if (this.verboseness > 0) {
+            if (this.verboseness > 1) {
                 console.log(e);
             }
         });
