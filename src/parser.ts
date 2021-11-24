@@ -179,9 +179,9 @@ export class Parser {
                     weapon,
                     e.userid,
                     [
-                        weapon.owner.position.x,
-                        weapon.owner.position.y,
-                        weapon.owner.position.z
+                        weapon.owner?.position?.x,
+                        weapon.owner?.position?.y,
+                        weapon.owner?.position?.z
                     ]
                 );
                 this.utilityLifecycleStream.write(this._parseUtilityLifecycleEvent(utilityThrownEvent));
@@ -401,9 +401,9 @@ export class Parser {
             player.eyeAngles.pitch,
             player.eyeAngles.yaw,
             player.speed,
-            player.position.x,
-            player.position.y,
-            player.position.z,
+            player.position?.x,
+            player.position?.y,
+            player.position?.z,
             player.placeName
         ].join(this.delimiter) + '\n';
     }
